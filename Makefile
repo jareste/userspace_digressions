@@ -2,14 +2,14 @@ NAME = initramfs.cpio
 INIT_BIN = init
 ROOTFS = /tmp/rootfs
 KERNEL = /boot/vmlinuz-$(shell uname -r)
-BUSYBOX = /bin/busybox
+BUSYBOX = /tmp/busybox/_install/bin/busybox
 
 CC = gcc
 CFLAGS = -static
 RM = rm -rf
 SRCS = init.c
 
-all: .gitignore $(NAME)
+all: .gitignore ibusybox $(NAME)
 
 $(INIT_BIN): $(SRCS)
 	$(CC) $(CFLAGS) -o $@ $^
@@ -24,6 +24,7 @@ $(NAME): $(INIT_BIN)
 	cp $(INIT_BIN) $(ROOTFS)/
 	cp $(BUSYBOX) $(ROOTFS)/bin/ || true
 	(cd $(ROOTFS)/bin && ln -sf busybox sh)
+	(cd $(ROOTFS)/bin && ln -sf busybox fsck)
 	(cd $(ROOTFS) && find . -print0 | cpio --null -ov --format=newc > $(NAME))
 	cpio -t < $(ROOTFS)/$(NAME) | head
 
@@ -37,6 +38,14 @@ clean:
 fclean: clean
 	@echo "[+] Eliminando initramfs..."
 	$(RM) $(NAME)
+
+ibusybox:
+	@if [ ! -f $(BUSYBOX) ]; then \
+		echo "BusyBox not found, building it..."; \
+		sh install_busybox.sh; \
+	else \
+		echo "BusyBox already built."; \
+	fi
 
 .gitignore:
 	@if [ ! -f .gitignore ]; then \

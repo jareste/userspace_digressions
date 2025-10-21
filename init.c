@@ -5,6 +5,7 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <errno.h>
 #include <string.h>
 #include <dirent.h>
@@ -79,6 +80,43 @@ static void m_cd(void* arg)
         perror("chdir");
 }
 
+static void m_exec(char *input)
+{
+    char *argv[32];
+    int argc = 0;
+    char *token = strtok(input, " ");
+    int status;
+    pid_t pid;
+
+    while (token && argc < 31)
+    {
+        argv[argc++] = token;
+        token = strtok(NULL, " ");
+    }
+    argv[argc] = NULL;
+
+    if (argc == 0)
+        return;
+
+    if (!getenv("PATH"))
+        setenv("PATH", "/bin:/sbin:/usr/bin:/usr/sbin", 1);
+
+
+    pid = fork();
+    if (pid == 0)
+    {
+        execvp(argv[0], argv);
+        fprintf(stderr, "Command not found: %s\n", argv[0]);
+        _exit(1);
+    }
+    else if (pid > 0)
+    {
+        waitpid(pid, &status, 0);
+    }
+    else
+        perror("fork");
+}
+
 static void m_cli(void)
 {
     char cwd[PATH_MAX];
@@ -124,15 +162,17 @@ static void m_cli(void)
                 break;
             }
         }
-
         if (m_cmds[i].name == NULL)
-            printf("Unknown command: %s\n", input);
-
+        {
+            m_exec(input);
+        }
     }
 }
 
 int main(void)
 {
+    int ret;
+
     printf("Init started. (PID = %d)\n", getpid());
 
     create_dir("/proc");
@@ -150,14 +190,42 @@ int main(void)
     if (mount(NULL, "/", NULL, MS_REMOUNT | MS_RDONLY, NULL) == 0)
         printf("Root remounted read-only\n");
 
-    system("fsck -A -y");
+    ret = system("fsck -A -y");
+    if (ret == -1)
+    {
+        printf("Failed to execute fsck command\n");
+        perror("system");
+    }
+    else
+        printf("Filesystem check completed with return code %d\n", ret);
+
+    ret = system("/bin/busybox fsck -A -y");
+    if (ret == -1)
+    {
+        printf("Failed to execute fsck command\n");
+        perror("system");
+    }
+    else
+        printf("Filesystem check completed with return code %d\n", ret);
 
     if (mount(NULL, "/", NULL, MS_REMOUNT, NULL) == 0)
         printf("Root remounted read-write\n");
 
-    system("swapon -a 2>/dev/null");
+    ret = system("swapon -a 2>/dev/null");
+    printf("Swap activation completed with return code %d\n", ret);
 
     printf("Kernel filesystems mounted successfully.\n");
+
+    /* easy way of validation that busybox it's ok. */
+    ret = system("/bin/busybox ls");
+    if (ret == -1)
+    {
+        printf("Failed to execute ls command\n");
+        perror("system");
+    }
+    else
+        printf("ls command completed with return code %d\n", ret);
+    /* erase */
 
     m_cli();
 
