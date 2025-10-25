@@ -2,14 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/mount.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <errno.h>
 #include <string.h>
 #include <dirent.h>
 #include <limits.h>
+#include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/utsname.h>
 
 #define MOUNT(source, target, fstype, flags, data) \
     do { \
@@ -24,6 +25,15 @@
                    source ? source : "none", target, fstype ? fstype : ""); \
         } \
     } while (0)
+
+#define RESET   "\033[0m"
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[33m"
+#define BLUE    "\033[34m"
+#define MAGENTA "\033[35m"
+#define CYAN    "\033[36m"
+#define WHITE   "\033[37m"
 
 typedef struct
 {
@@ -172,6 +182,8 @@ static void m_cli(void)
 int main(void)
 {
     int ret;
+    const char *default_host = "jareste-";
+    char hostname[64];
 
     printf("Init started. (PID = %d)\n", getpid());
 
@@ -214,6 +226,31 @@ int main(void)
     ret = system("swapon -a 2>/dev/null");
     printf("Swap activation completed with return code %d\n", ret);
 
+    system("/bin/busybox mount -a");
+    system("/bin/busybox syslogd");
+    system("/bin/busybox crond");
+
+    FILE *f = fopen("/etc/hostname", "r");
+    if (f)
+    {
+        if (fgets(hostname, sizeof(hostname), f))
+        {
+            hostname[strcspn(hostname, "\n")] = '\0';
+            sethostname(hostname, strlen(hostname));
+            printf(GREEN "Hostname set to: %s\n" RESET, hostname);
+        }
+        fclose(f);
+    }
+    else
+    {
+        
+        if (sethostname(default_host, strlen(default_host)) == 0)
+            printf("No /etc/hostname found. Hostname set to default: %s\n", default_host);
+        else
+            perror("sethostname");
+    }
+
+    
     printf("Kernel filesystems mounted successfully.\n");
 
     /* easy way of validation that busybox it's ok. */
