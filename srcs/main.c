@@ -2,10 +2,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "ft_ud.h"
 #include "ud_hostname.h"
 #include "ud_mount.h"
 #include "ud_cli.h"
 #include "ud_consoles.h"
+#include "ud_network.h"
+#include "ud_modules.h"
 
 #ifdef DEBUG
 void debug_checks(void)
@@ -22,7 +25,7 @@ void debug_checks(void)
         printf("ls command completed with return code %d\n", ret);
 }
 #endif
-
+// void init_network_interfaces(void)
 int main()
 {
     printf("Init started. (PID = %d)\n", getpid());
@@ -33,7 +36,11 @@ int main()
     system("/bin/busybox crond");
 
     hostname_init();
-    
+
+    modules_load();
+
+    network_init();
+
     debug_checks();
 
     cli_run();

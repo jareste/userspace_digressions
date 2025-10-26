@@ -8,13 +8,11 @@ CC = gcc
 CFLAGS = -static -Wall -Wextra -Werror -DDEBUG
 RM = rm -rf
 
-DIRS = bin dev proc sys etc run tmp sbin
-COMMANDS = sh fsck cat mount swapon getty ls login
-
-# SRCS = init.c
+DIRS = bin dev proc sys etc run tmp sbin lib lib/modules
+COMMANDS = sh fsck cat mount swapon getty ls login ifconfig ip udhcpc ping insmod
 
 #########
-FILES = main ud_hostname ud_mount ud_cli ud_consoles
+FILES = main ud_hostname ud_mount ud_cli ud_consoles ud_network ud_modules
 
 SRC = $(addsuffix .c, $(FILES))
 
@@ -48,6 +46,10 @@ $(NAME): $(INIT_BIN) create_dirs create_commands
 	dos2unix files/*
 	cp files/fstab $(ROOTFS)/etc/fstab
 	cp files/passwd $(ROOTFS)/etc/passwd
+	cp files/net.conf $(ROOTFS)/etc/net.conf
+	cp files/modules $(ROOTFS)/etc/modules
+	mkdir -p $(ROOTFS)/lib/modules/
+	cp /lib/modules/$(shell uname -r)/kernel/drivers/net/ethernet/intel/e1000/e1000.ko $(ROOTFS)/lib/modules/
 	(cd $(ROOTFS) && find . -print0 | cpio --null -ov --format=newc > $(NAME))
 	cpio -t < $(ROOTFS)/$(NAME) | head
 
@@ -62,7 +64,7 @@ create_commands:
 	done
 
 run: $(NAME)
-	qemu-system-x86_64 -kernel $(KERNEL) -initrd $(ROOTFS)/$(NAME) -append "console=ttyS0 init=/init" -nographic
+	qemu-system-x86_64 -kernel $(KERNEL) -initrd $(ROOTFS)/$(NAME) -append "console=ttyS0 init=/init noapic nolapic" -nographic -nic user,model=e1000
 
 clean:
 	@echo "[+] Limpiando archivos temporales..."
