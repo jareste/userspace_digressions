@@ -8,13 +8,13 @@ CC = gcc
 CFLAGS = -static -Wall -Wextra -Werror -DDEBUG
 RM = rm -rf
 
-DIRS = bin dev proc sys etc run tmp
-COMMANDS = sh fsck cat
+DIRS = bin dev proc sys etc run tmp sbin
+COMMANDS = sh fsck cat mount swapon getty ls login
 
 # SRCS = init.c
 
 #########
-FILES = main ud_hostname ud_mount ud_cli
+FILES = main ud_hostname ud_mount ud_cli ud_consoles
 
 SRC = $(addsuffix .c, $(FILES))
 
@@ -43,10 +43,11 @@ $(NAME): $(INIT_BIN) create_dirs create_commands
 	$(RM) $@
 	echo "jareste-" > $(ROOTFS)/etc/hostname
 	cp $(INIT_BIN) $(ROOTFS)/
-	cp $(BUSYBOX) $(ROOTFS)/bin/ || true
-# 	(cd $(ROOTFS)/bin && ln -sf busybox sh)
-# 	(cd $(ROOTFS)/bin && ln -sf busybox fsck)
-# 	(cd $(ROOTFS)/bin && ln -sf busybox cat)
+	cp $(BUSYBOX) $(ROOTFS)/bin/. || true
+	cp /sbin/fsck.ext4 $(ROOTFS)/sbin/fsck.ext4 || true
+	dos2unix files/*
+	cp files/fstab $(ROOTFS)/etc/fstab
+	cp files/passwd $(ROOTFS)/etc/passwd
 	(cd $(ROOTFS) && find . -print0 | cpio --null -ov --format=newc > $(NAME))
 	cpio -t < $(ROOTFS)/$(NAME) | head
 
@@ -83,8 +84,9 @@ ibusybox:
 	@if [ ! -f .gitignore ]; then \
 		echo ".gitignore not found, creating it..."; \
 		echo "$(NAME)" > .gitignore; \
-		echo "$(INIT_BIN)" >> .gitignore \
-		echo .gitignore >> .gitignore \
+		echo "$(INIT_BIN)" >> .gitignore; \
+		echo "$(OBJ_DIR)" >> .gitignore; \
+		echo .gitignore >> .gitignore; \
 	else \
 		echo ".gitignore already exists."; \
 	fi

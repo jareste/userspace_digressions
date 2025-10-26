@@ -14,17 +14,22 @@ typedef struct
     void (*func)(void* arg);
 } t_cmd;
 
+#ifdef USE_MY_LS
 static void m_ls(void* arg);
+#endif
 static void m_cd(void* arg);
 
 static const t_cmd m_cmds[] =
 {
+#ifdef USE_MY_LS
     {"ls", m_ls},
+#endif
     {"cd", m_cd},
     {"exit", NULL},
     {NULL, NULL}
 };
 
+#ifdef USE_MY_LS
 static void m_ls(void* arg)
 {
     const char* path = (const char*)arg;
@@ -46,6 +51,7 @@ static void m_ls(void* arg)
 
     closedir(dir);
 }
+#endif
 
 static void m_cd(void* arg)
 {
@@ -95,7 +101,6 @@ void cli_run(void)
 {
     char cwd[PATH_MAX];
     char input[256];
-    const char* path;
     const char* arg;
     size_t cmd_len;
     size_t i;

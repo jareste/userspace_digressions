@@ -5,6 +5,7 @@
 #include "ud_hostname.h"
 #include "ud_mount.h"
 #include "ud_cli.h"
+#include "ud_consoles.h"
 
 #ifdef DEBUG
 void debug_checks(void)
@@ -27,6 +28,7 @@ int main()
     printf("Init started. (PID = %d)\n", getpid());
 
     mount_init();
+
     system("/bin/busybox syslogd");
     system("/bin/busybox crond");
 
@@ -35,6 +37,9 @@ int main()
     debug_checks();
 
     cli_run();
+
+    /* Is it ok to wait until my cli is over to spawn the actual linux cli? */
+    spawn_consoles();
 
     printf("Init finished, halting system...\n");
     while (1) {}

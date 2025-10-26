@@ -35,11 +35,13 @@ int mount_init(void)
 {
     int ret;
 
+    /* Mount initial PID1 fs needed. */
     create_dir("/proc");
     create_dir("/sys");
     create_dir("/dev");
     create_dir("/run");
     create_dir("/tmp");
+
 
     MOUNT("proc", "/proc", "proc", 0, "");
     MOUNT("sysfs", "/sys", "sysfs", 0, "");
@@ -50,34 +52,34 @@ int mount_init(void)
     if (mount(NULL, "/", NULL, MS_REMOUNT | MS_RDONLY, NULL) == 0)
         printf("Root remounted read-only\n");
 
+    /* Check proper fs integrity by checking no trash in /etc/fstab */
+    printf(BLUE "fsck -A -y\n" RESET);
     ret = system("fsck -A -y");
     if (ret == -1)
-    {
-        printf("Failed to execute fsck command\n");
-        perror("system");
-    }
-    else
-        printf("Filesystem check completed with return code %d\n", ret);
-
-
-    ret = system("/bin/busybox fsck -A -y");
-    if (ret == -1)
-    {
-        printf("Failed to execute fsck command\n");
-        perror("system");
-    }
+        perror(RED "system" RESET);
     else
         printf("Filesystem check completed with return code %d\n", ret);
 
     if (mount(NULL, "/", NULL, MS_REMOUNT, NULL) == 0)
         printf("Root remounted read-write\n");
 
+    printf(BLUE "swapon -a 2>/dev/null\n" RESET);
     ret = system("swapon -a 2>/dev/null");
-    printf("Swap activation completed with return code %d\n", ret);
+    if (ret == -1)
+        perror(RED "system" RESET);
+    else
+        printf("Swap activation completed with return code %d\n", ret);
 
+    /* Mount all user defined fs from /etc/fstab */
+    printf(BLUE "mount -a\n" RESET);
     system("/bin/busybox mount -a");
 
-    printf("Kernel filesystems mounted successfully.\n");
+    create_dir("/root");
+    create_dir("/home");
+    create_dir("/home/jareste");
+
+
+    printf(GREEN "Kernel filesystems mounted successfully.\n" RESET);
 
     return 0;
 }

@@ -10,4 +10,10 @@
 #define CYAN    "\033[36m"
 #define WHITE   "\033[37m"
 
+#define HALT          \
+    do                  \
+    {                   \
+        while (1) { }      \
+    } while (0)
+
 #endif /* FT_UD_H */
