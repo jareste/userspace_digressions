@@ -5,6 +5,7 @@
 #include <sys/utsname.h>
 
 #include "ft_ud.h"
+#include "ud_log.h"
 
 int hostname_init(void)
 {
@@ -19,14 +20,14 @@ int hostname_init(void)
         {
             hostname[strcspn(hostname, "\n")] = '\0';
             sethostname(hostname, strlen(hostname));
-            printf(GREEN "Hostname set to: %s\n" RESET, hostname);
+            log_msg(LOG_LEVEL_INFO, GREEN "Hostname set to: %s\n" RESET, hostname);
         }
         fclose(f);
     }
     else
     {
         if (sethostname(default_host, strlen(default_host)) == 0)
-            printf("No /etc/hostname found. Hostname set to default: %s\n", default_host);
+            log_msg(LOG_LEVEL_INFO, "No /etc/hostname found. Hostname set to default: %s\n", default_host);
         else
             perror("sethostname");
     }

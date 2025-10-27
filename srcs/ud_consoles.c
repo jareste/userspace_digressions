@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include "ft_ud.h"
+#include "ud_log.h"
 
 int spawn_tty(const char *tty, const char *baud, const char *term)
 {
@@ -13,19 +14,19 @@ int spawn_tty(const char *tty, const char *baud, const char *term)
     pid = fork();
     if (pid < 0)
     {
-        fprintf(stderr, "Failed to fork for %s: %s\n", tty, strerror(errno));
+        log_msg(LOG_LEVEL_ERROR, "Failed to fork for %s: %s\n", tty, strerror(errno));
         return -1;
     }
 
     if (pid == 0)
     {
         execl("/bin/getty", "getty", "-L", baud, tty, term, NULL);
-        printf(RED "Failed to exec getty on %s: %s\n" RESET, tty, strerror(errno));
+        log_msg(LOG_LEVEL_INFO, RED "Failed to exec getty on %s: %s\n" RESET, tty, strerror(errno));
         _exit(1);
     }
 
     /* No error control? can we assume it's happening? */
-    printf("Spawned getty on %s (PID %d)\n", tty, pid);
+    log_msg(LOG_LEVEL_INFO, "Spawned getty on %s (PID %d)\n", tty, pid);
     return pid;
 }
 

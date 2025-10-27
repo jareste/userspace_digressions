@@ -9,10 +9,10 @@ CFLAGS = -static -Wall -Wextra -Werror -DDEBUG
 RM = rm -rf
 
 DIRS = bin dev proc sys etc run tmp sbin lib lib/modules
-COMMANDS = sh fsck cat mount swapon getty ls login ifconfig ip udhcpc ping insmod
+COMMANDS = sh fsck cat mount swapon getty ls login ifconfig ip udhcpc ping insmod syslogd crond
 
 #########
-FILES = main ud_hostname ud_mount ud_cli ud_consoles ud_network ud_modules
+FILES = main ud_hostname ud_mount ud_cli ud_consoles ud_network ud_modules ft_list ud_daemon ud_signals ud_log
 
 SRC = $(addsuffix .c, $(FILES))
 
@@ -43,11 +43,15 @@ $(NAME): $(INIT_BIN) create_dirs create_commands
 	cp $(INIT_BIN) $(ROOTFS)/
 	cp $(BUSYBOX) $(ROOTFS)/bin/. || true
 	cp /sbin/fsck.ext4 $(ROOTFS)/sbin/fsck.ext4 || true
+	mv $(ROOTFS)/bin/crond $(ROOTFS)/sbin/crond || true
 	dos2unix files/*
 	cp files/fstab $(ROOTFS)/etc/fstab
 	cp files/passwd $(ROOTFS)/etc/passwd
+	cp /usr/share/zoneinfo/Europe/Madrid $(ROOTFS)/etc/localtime
 	cp files/net.conf $(ROOTFS)/etc/net.conf
 	cp files/modules $(ROOTFS)/etc/modules
+	cp files/daemons.conf $(ROOTFS)/etc/daemons.conf
+	cc files/cli_client.c -o $(ROOTFS)/bin/initctl -static
 	mkdir -p $(ROOTFS)/lib/modules/
 	cp /lib/modules/$(shell uname -r)/kernel/drivers/net/ethernet/intel/e1000/e1000.ko $(ROOTFS)/lib/modules/
 	(cd $(ROOTFS) && find . -print0 | cpio --null -ov --format=newc > $(NAME))
@@ -96,4 +100,4 @@ ibusybox:
 
 re: fclean all
 
-.PHONY: all clean fclean re run create_dirs
+.PHONY: all clean fclean re run create_dirs ibusybox create_commands

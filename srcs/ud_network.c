@@ -6,6 +6,7 @@
 #include <sys/types.h>
 
 #include "ft_ud.h"
+#include "ud_log.h"
 
 #define NETCONF_PATH "/etc/net.conf"
 
@@ -31,7 +32,7 @@ static void configure_static(const char *iface, const char *addr, const char *ma
         system(cmd);
     }
 
-    printf(GREEN "Configured static IP for %s: %s/%s gw %s" RESET "\n", iface, addr, mask, gw);
+    log_msg(LOG_LEVEL_INFO, GREEN "Configured static IP for %s: %s/%s gw %s" RESET "\n", iface, addr, mask, gw);
 }
 
 void network_init(void)
@@ -78,7 +79,7 @@ void network_init(void)
             else if (strcmp(mode, "static") == 0 && n >= 5)
                 configure_static(iface, addr, mask, gw);
             else
-                printf(RED "Unknown mode %s for interface %s" RESET "\n", mode, iface);
+                log_msg(LOG_LEVEL_INFO, RED "Unknown mode %s for interface %s" RESET "\n", mode, iface);
             
             exit(0);
         }

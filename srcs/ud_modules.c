@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "ft_ud.h"
+#include "ud_log.h"
 
 #define MODULES_FILE "/etc/modules"
 
@@ -35,7 +36,7 @@ void modules_load(void)
         if (ret == -1)
             perror(RED "system" RESET);
         else
-            printf(GREEN "Loaded module %s\n" RESET, line);
+            log_msg(LOG_LEVEL_INFO, GREEN "Loaded module %s\n" RESET, line);
     }
 
     fclose(f);

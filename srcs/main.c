@@ -9,6 +9,9 @@
 #include "ud_consoles.h"
 #include "ud_network.h"
 #include "ud_modules.h"
+#include "ud_daemon.h"
+#include "ud_signals.h"
+#include "ud_log.h"
 
 #ifdef DEBUG
 void debug_checks(void)
@@ -18,22 +21,24 @@ void debug_checks(void)
     ret = system("/bin/busybox ls");
     if (ret == -1)
     {
-        printf("Failed to execute ls command\n");
+        log_msg(LOG_LEVEL_INFO, "Failed to execute ls command\n");
         perror("system");
     }
     else
-        printf("ls command completed with return code %d\n", ret);
+        log_msg(LOG_LEVEL_INFO, "ls command completed with return code %d\n", ret);
 }
+#else
+#define debug_checks() \
+    do { } while (0)
 #endif
-// void init_network_interfaces(void)
+
 int main()
 {
-    printf("Init started. (PID = %d)\n", getpid());
-
     mount_init();
 
-    system("/bin/busybox syslogd");
-    system("/bin/busybox crond");
+    log_init();
+
+    log_msg(LOG_LEVEL_INFO, "Init started. (PID = %d)\n", getpid());
 
     hostname_init();
 
@@ -41,14 +46,20 @@ int main()
 
     network_init();
 
+    signals_init();
+
+    daemon_init();
+
     debug_checks();
 
     cli_run();
 
+    system("busybox crond -f -l 8 -L /var/log/cron.log & 2>/dev/null");
+
     /* Is it ok to wait until my cli is over to spawn the actual linux cli? */
     spawn_consoles();
 
-    printf("Init finished, halting system...\n");
+    log_msg(LOG_LEVEL_INFO, "Init finished\n");
     while (1) {}
     system("poweroff -f");
 
