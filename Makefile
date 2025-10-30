@@ -1,11 +1,14 @@
 NAME = initramfs.cpio
-INIT_BIN = init
+INIT_BIN = /tmp/ud/init
 ROOTFS = /tmp/rootfs
-KERNEL = /boot/vmlinuz-$(shell uname -r)
+# KERNEL = /boot/vmlinuz-$(shell uname -r)
+KERNEL_NAME = $(shell uname -r)
+# KERNEL_NAME = 6.8.0-87-generic
+KERNEL = /boot/vmlinuz-$(KERNEL_NAME)
 BUSYBOX = /tmp/busybox/_install/bin/busybox
 
 CC = gcc
-CFLAGS = -static -Wall -Wextra -Werror -DDEBUG
+CFLAGS = -static -Wall -Wextra -Werror #-DDEBUG
 RM = rm -rf
 
 DIRS = bin dev proc sys etc run tmp sbin lib lib/modules
@@ -34,6 +37,7 @@ $(OBJ_DIR)/%.o: %.c
 all: .gitignore ibusybox $(NAME)
 
 $(INIT_BIN): $(OBJ)
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -o $@ $^
 
 
@@ -51,9 +55,10 @@ $(NAME): $(INIT_BIN) create_dirs create_commands
 	cp files/net.conf $(ROOTFS)/etc/net.conf
 	cp files/modules $(ROOTFS)/etc/modules
 	cp files/daemons.conf $(ROOTFS)/etc/daemons.conf
-	cc files/cli_client.c -o $(ROOTFS)/bin/initctl -static
+	cc files/systemctl.c -o $(ROOTFS)/bin/systemctl -static
+	cc files/daemon.c -o $(ROOTFS)/bin/my_daemon -static
 	mkdir -p $(ROOTFS)/lib/modules/
-	cp /lib/modules/$(shell uname -r)/kernel/drivers/net/ethernet/intel/e1000/e1000.ko $(ROOTFS)/lib/modules/
+	cp /lib/modules/$(KERNEL_NAME)/kernel/drivers/net/ethernet/intel/e1000/e1000.ko $(ROOTFS)/lib/modules/
 	(cd $(ROOTFS) && find . -print0 | cpio --null -ov --format=newc > $(NAME))
 	cpio -t < $(ROOTFS)/$(NAME) | head
 

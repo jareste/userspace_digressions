@@ -14,7 +14,7 @@
 #include "ud_daemon.h"
 #include "ud_log.h"
 
-#define SOCKET_PATH "/run/initctl.sock"
+#define SOCKET_PATH "/run/systemctl.sock"
 #define BUF_SIZE 1024
 
 typedef struct

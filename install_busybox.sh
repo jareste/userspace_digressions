@@ -4,5 +4,6 @@ git clone https://git.busybox.net/busybox /tmp/busybox
 cd /tmp/busybox
 make defconfig
 sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/' .config
+sed -i 's/CONFIG_TC=y/# CONFIG_TC is not set/' .config
 make -j$(nproc)
 make install

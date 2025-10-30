@@ -58,7 +58,7 @@ static int m_start_daemon(t_daemon *d)
 
     d->pid = pid;
     d->running = 1;
-    log_msg(LOG_LEVEL_INFO, "Started daemon %s (PID %d)\n", d->name, pid);
+    log_msg(LOG_LEVEL_INFO, "Started daemon %s (%s) (PID %d)\n", d->name, d->path, d->pid);
     return 0;
 }
 
@@ -69,6 +69,7 @@ static int m_stop_daemon(t_daemon *d)
     kill(d->pid, SIGTERM);
     waitpid(d->pid, NULL, 0);
     d->running = 0;
+    log_msg(LOG_LEVEL_INFO, "Stopped daemon %s (PID %d)\n", d->name, d->pid);
     return 0;
 }
 
@@ -189,6 +190,7 @@ void monitor_daemons(void)
         if (d->running && kill(d->pid, 0) != 0)
         {
             d->running = 0;
+            log_msg(LOG_LEVEL_INFO, "Daemon %s died (PID %d)\n", d->name, d->pid);
         }
         d = FT_LIST_GET_NEXT(&m_daemons, d);
     }
@@ -254,6 +256,8 @@ void daemons_load(const char *config_path)
 
         if (d->enabled)
             m_start_daemon(d);
+
+        log_msg(LOG_LEVEL_INFO, "Loaded daemon %s enabled: %d running: %d\n", d->name, d->enabled, d->running);
     }
 
     fclose(fp);

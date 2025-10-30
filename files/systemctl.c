@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#define SOCKET_PATH "/run/initctl.sock"
+#define SOCKET_PATH "/run/systemctl.sock"
 #define BUF_SIZE 1024
 
 int main(int argc, char *argv[])

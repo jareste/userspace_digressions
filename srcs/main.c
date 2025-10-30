@@ -32,6 +32,12 @@ void debug_checks(void)
     do { } while (0)
 #endif
 
+void create_cron_test()
+{
+    system("echo '* * * * * echo cron working >> /tmp/cron_test.log' > /var/spool/cron/crontabs/root");
+    system("busybox chmod 600 /var/spool/cron/crontabs/root");
+}
+
 int main()
 {
     mount_init();
@@ -59,6 +65,9 @@ int main()
     /* Is it ok to wait until my cli is over to spawn the actual linux cli? */
     spawn_consoles();
 
+    create_cron_test();
+
+    system("export PATH=$PATH:/bin/busybox");
     log_msg(LOG_LEVEL_INFO, "Init finished\n");
     while (1) {}
     system("poweroff -f");
