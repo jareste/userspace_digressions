@@ -33,7 +33,6 @@ $(OBJ_DIR)/%.o: %.c
 	${CC} -MMD $(CFLAGS) -Isrcs -c $< -o $@
 
 
-
 all: .gitignore ibusybox $(NAME)
 
 $(INIT_BIN): $(OBJ)
@@ -86,6 +85,7 @@ fclean: clean
 ibusybox:
 	@if [ ! -f $(BUSYBOX) ]; then \
 		echo "BusyBox not found, building it..."; \
+		dos2unix install_busybox.sh; \
 		sh install_busybox.sh; \
 	else \
 		echo "BusyBox already built."; \
